@@ -1,0 +1,35 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30110.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{238C1269-A138-485F-A3A3-7ADB1C83A02B}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\NuGet.Config = .nuget\NuGet.Config
+		.nuget\NuGet.exe = .nuget\NuGet.exe
+		.nuget\NuGet.targets = .nuget\NuGet.targets
+	EndProjectSection
+EndProject
+Project("{CC5FD16D-436D-48AD-A40C-5A424C6E3E79}") = "Sample.Cloud", "Sample.Cloud\Sample.Cloud.ccproj", "{24081559-33D3-46D2-A20F-DA9A8ED1782A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Cloud.HardWorker", "Sample.Cloud.HardWorker\Sample.Cloud.HardWorker.csproj", "{759C04D7-887A-4B7D-B44C-F4641D3D62E1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{24081559-33D3-46D2-A20F-DA9A8ED1782A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24081559-33D3-46D2-A20F-DA9A8ED1782A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24081559-33D3-46D2-A20F-DA9A8ED1782A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24081559-33D3-46D2-A20F-DA9A8ED1782A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{759C04D7-887A-4B7D-B44C-F4641D3D62E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{759C04D7-887A-4B7D-B44C-F4641D3D62E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{759C04D7-887A-4B7D-B44C-F4641D3D62E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{759C04D7-887A-4B7D-B44C-F4641D3D62E1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
