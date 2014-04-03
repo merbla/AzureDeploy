@@ -309,13 +309,8 @@ Param(
         New-AzureSqlDatabaseServerFirewallRule -ServerName $databaseServer.ServerName -RuleName $firewallRuleName -StartIpAddress $ipAddress -EndIpAddress $ipAddress -Verbose
         New-AzureSqlDatabaseServerFirewallRule -ServerName $databaseServer.ServerName -RuleName "AllowAllAzureIP" -StartIpAddress "0.0.0.0" -EndIpAddress "0.0.0.0" -Verbose
 
-          Foreach ($s in $servers){
-            if($s.Location -eq $location){
-                $databaseServer = $s;
-                
-                break
-            }    
-        }
+           Start-Sleep -s 10
+         
     }
     else{
       Write-Verbose "Database server does exist for the location, using existing"

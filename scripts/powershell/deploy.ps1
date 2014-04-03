@@ -6,11 +6,11 @@ http://www.windowsazure.com/en-us/develop/net/building-real-world-cloud-apps/
 
 #>
 param(
-        [Parameter(Mandatory=$False,Position=1)]
-        [string]$pathToAzureConfig =  "ServiceConfiguration.Cloud.cscfg",
+        [Parameter(Mandatory=$True,Position=1)]
+        [string]$pathToAzureConfig ,
 
-        [Parameter(Mandatory=$False,Position=2)]
-        [string]$pathToAzurePackage = "Sample.Cloud.cspkg",
+        [Parameter(Mandatory=$True,Position=2)]
+        [string]$pathToAzurePackage ,
 
         [Parameter(Mandatory=$False,Position=3)]
         [string]$pathToPublishSettings = "MySettings.publishsettings",
@@ -36,6 +36,8 @@ param(
 
 	 )
 cls
+
+
 
 #Include the helpers
 . .\Helpers.ps1
@@ -79,6 +81,8 @@ Import-AzurePublishSettingsFile -PublishSettingsFile $pathToPublishSettings
 
 $subscription = Get-AzureSubscription -Current
 if (!$subscription) {throw "Cannot get Windows Azure subscription. Failure in Get-AzureSubscription check publish setttings file"}
+
+$sqlServerName = CreateSqlServer -firewallRuleName $serviceName  -sqlAdminUser  $sqlAdminUser -sqlAdminPassword $sqlAdminPassword -location $location -ipAddress $ipRange
  
 CreateAffinityGroup $affinityGroupName $location
 
@@ -92,9 +96,6 @@ Set-AzureSubscription $subscription.SubscriptionName -CurrentStorageAccountName 
 $storagekey = Get-AzureStorageKey -StorageAccountName $storageAccountName
 $defaultStorageEndpoint ="DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}" -f $storageAccountName, $storagekey.Primary
 
-
-$sqlServerName = CreateSqlServer -firewallRuleName $serviceName  -sqlAdminUser  $sqlAdminUser -sqlAdminPassword $sqlAdminPassword -location $location -ipAddress $ipRange
- Start-Sleep -s 2
 $database = CreateDatabase -databaseServerName $sqlServerName -databaseName $databaseName
 $databaseConnectionString = Get-SQLAzureDatabaseConnectionString -serverName $sqlServerName  -databaseName $databaseName -sqlUser  $sqlAdminUser -sqlPassword $sqlAdminPassword 
 

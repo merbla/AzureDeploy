@@ -172,3 +172,7 @@ UpgradeLog*.htm
 
 # Microsoft Fakes
 FakesAssemblies/
+src/SqlSchemaCompare1.scmp
+scripts/powershell/ServiceConfiguration.Cloud.cscfg
+scripts/powershell/Sample.Cloud.cspkg
+scripts/powershell/Sample.Cloud.Database.dacpac
