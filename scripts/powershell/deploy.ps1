@@ -56,7 +56,7 @@ try{
     $ipRange = Detect-IPAddress
 }
 catch{
-    Write-Error "Cannot determine pulbic IP of this machine"
+    Write-Error "Cannot determine public IP of this machine"
  
  exit
 }
