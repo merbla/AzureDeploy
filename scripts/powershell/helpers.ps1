@@ -164,11 +164,11 @@ Param(
     do
     {
         $MyDeploy = Get-AzureDeployment -ServiceName $MyServiceName  
-        foreach ($Instancia in $MyDeploy.RoleInstanceList)
+        foreach ($instance in $MyDeploy.RoleInstanceList)
         {
             $switch=$true
-            Write-Verbose ("Instance {0} is in state {1}" -f $Instancia.InstanceName, $Instancia.InstanceStatus )
-            if ($Instancia.InstanceStatus -ne "ReadyRole")
+            Write-Verbose ("Instance {0} is in state {1}" -f $instance.InstanceName, $instance.InstanceStatus )
+            if ($instance.InstanceStatus -ne "ReadyRole")
             {
                 $switch=$false
             }
@@ -267,8 +267,8 @@ function CreateDatabase{
     
 
     if($database -eq $null){
-        Write-Verbose "Database does not exist for the location creating new $databaseName"
-        $database = New-AzureSqlDatabase  -DatabaseName $databaseName -ServerName $databaseServerName
+        Write-Verbose "Database does not exist on $databaseServerName, creating new $databaseName"
+        $database = New-AzureSqlDatabase  -DatabaseName $databaseName -ServerName $databaseServerName -Verbose
     }
     else{
         Write-Verbose "Database already exists for the location "
@@ -303,20 +303,31 @@ Param(
     }
 
     if($databaseServer -eq $null){
-        Write-Verbose "Database server does not exist for the location, creating new"
-        $databaseServer = New-AzureSqlDatabaseServer -AdministratorLogin $sqlAdminUser  -AdministratorLoginPassword $sqlAdminPassword -Location $location
-        Write-Host $ipAddress
-        New-AzureSqlDatabaseServerFirewallRule -ServerName $databaseServer.ServerName -RuleName $firewallRuleName -StartIpAddress $ipAddress -EndIpAddress $ipAddress -Verbose
-        New-AzureSqlDatabaseServerFirewallRule -ServerName $databaseServer.ServerName -RuleName "AllowAllAzureIP" -StartIpAddress "0.0.0.0" -EndIpAddress "0.0.0.0" -Verbose
+        Write-Host "Database server does not exist for the location, creating new server" -ForegroundColor Yellow
+        $databaseServer = New-AzureSqlDatabaseServer -AdministratorLogin $sqlAdminUser  -AdministratorLoginPassword $sqlAdminPassword -Location $location -Verbose
+        
+        New-AzureSqlDatabaseServerFirewallRule -ServerName $databaseServer.ServerName -RuleName $firewallRuleName -StartIpAddress $ipAddress -EndIpAddress $ipAddress
+        #For the purposes of the demo all all :(
+        New-AzureSqlDatabaseServerFirewallRule -ServerName $databaseServer.ServerName -RuleName "AllDaThingz" -StartIpAddress "0.0.0.0"  -EndIpAddress "255.255.255.255"
 
-           Start-Sleep -s 10
-         
+        New-AzureSqlDatabaseServerFirewallRule -ServerName $databaseServer.ServerName -RuleName "AllowAllAzureIP" -StartIpAddress "0.0.0.0" -EndIpAddress "0.0.0.0"
+        
+        Write-Host -ForegroundColor Yellow "Applied firewall rule for $ipAddress, waiting 120 secs for it to be applied"
+
+        Start-Sleep -s 120
+           
+        $name =  $databaseServer.ServerName
+                 
+        Write-Host -ForegroundColor Yellow "SQL Server created: $name"
+       
+        
+        return $name
     }
     else{
-      Write-Verbose "Database server does exist for the location, using existing"
+      Write-Host -ForegroundColor Yellow "Database server exists for the location, using $databaseServer.ServerName"
+      Write-Host $databaseServer
+      return $databaseServer.ServerName
     }
     
-    Write-Host -ForegroundColor Yellow $databaseServer.ServerName
-   
-    return $databaseServer.ServerName
+    
 }

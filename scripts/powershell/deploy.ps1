@@ -3,6 +3,7 @@ http://gallery.technet.microsoft.com/scriptcenter/Deploy-a-Windows-Azure-Web-816
 http://code.msdn.microsoft.com/windowsazure/Fix-It-app-for-Building-cdd80df4
 http://www.windowsazure.com/en-us/develop/net/building-real-world-cloud-apps/
 
+.\deploy.ps1 -pathToAzureConfig "C:\Source\Merbla\AzureDeploy\scripts\powershell\ServiceConfiguration.Cloud.cscfg" -pathToAzurePackage "C:\Source\Merbla\AzureDeploy\scripts\powershell\Sample.Cloud.cspkg" -Verbose
 
 #>
 param(
@@ -51,8 +52,16 @@ cls
 $startTime = Get-Date
 Write-Host -ForegroundColor Yellow "Starting $startTime"
 
-$ipRange = Detect-IPAddress
+try{
+    $ipRange = Detect-IPAddress
+}
+catch{
+    Write-Error "Cannot determine pulbic IP of this machine"
+ 
+ exit
+}
 
+ 
 Write-Host -ForegroundColor Yellow "Public IP of this machine: $ipRange"
 
 if($removeServices -eq $True){
@@ -82,8 +91,19 @@ Import-AzurePublishSettingsFile -PublishSettingsFile $pathToPublishSettings
 $subscription = Get-AzureSubscription -Current
 if (!$subscription) {throw "Cannot get Windows Azure subscription. Failure in Get-AzureSubscription check publish setttings file"}
 
-$sqlServerName = CreateSqlServer -firewallRuleName $serviceName  -sqlAdminUser  $sqlAdminUser -sqlAdminPassword $sqlAdminPassword -location $location -ipAddress $ipRange
- 
+CreateSqlServer -firewallRuleName $serviceName  -sqlAdminUser  $sqlAdminUser -sqlAdminPassword $sqlAdminPassword -location $location -ipAddress $ipRange
+
+#Get the server
+$servers = Get-AzureSqlDatabaseServer
+Foreach ($s in $servers){
+    if($s.Location -eq $location){
+        $sqlServerName = $s.ServerName;
+        break
+    }    
+}
+
+
+
 CreateAffinityGroup $affinityGroupName $location
 
 CreateCloudService $serviceName $affinityGroupName
@@ -93,35 +113,35 @@ CreateCloudStorage $storageAccountName $affinityGroupName
 #Set the Default Storage Account & get the access key of the storage account
 Set-AzureSubscription $subscription.SubscriptionName -CurrentStorageAccountName $storageAccountName 
 
+
 $storagekey = Get-AzureStorageKey -StorageAccountName $storageAccountName
 $defaultStorageEndpoint ="DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}" -f $storageAccountName, $storagekey.Primary
 
-$database = CreateDatabase -databaseServerName $sqlServerName -databaseName $databaseName
-$databaseConnectionString = Get-SQLAzureDatabaseConnectionString -serverName $sqlServerName  -databaseName $databaseName -sqlUser  $sqlAdminUser -sqlPassword $sqlAdminPassword 
-
-write-host -ForegroundColor Yellow $databaseConnectionString
-
-$sqlPackageExe = 'C:\Program Files (x86)\Microsoft SQL Server\110\DAC\bin\SqlPackage.exe'
- &$sqlPackageExe /a:Publish /sf:$pathToDacPac /tcs:$databaseConnectionString 
-
 
 #Update the config
+Write-Host -ForegroundColor Yellow "Updating storage config to use $defaultStorageEndpoint"
+
 Update-CscfgSetting -configurationFilePath $pathToAzureConfig -settingName "Microsoft.WindowsAzure.Plugins.Caching.ConfigStoreConnectionString" -settingValue $defaultStorageEndpoint
 Update-CscfgSetting -configurationFilePath $pathToAzureConfig -settingName "Microsoft.WindowsAzure.Plugins.Diagnostics.ConnectionString" -settingValue $defaultStorageEndpoint
-
 
 $deployment = DeployPackage -serviceName $serviceName -pathToAzureConfig $pathToAzureConfig -pathToAzurePackage $pathToAzurePackage
 
 WaitRoleInstanceReady $serviceName
 
+$database = CreateDatabase -databaseServerName $sqlServerName -databaseName $databaseName
+$databaseConnectionString = Get-SQLAzureDatabaseConnectionString -serverName $sqlServerName  -databaseName $databaseName -sqlUser  $sqlAdminUser -sqlPassword $sqlAdminPassword 
+
+Write-Host -ForegroundColor Yellow "Deploying using $databaseConnectionString"
+
+$sqlPackageExe = 'C:\Program Files (x86)\Microsoft SQL Server\110\DAC\bin\SqlPackage.exe'
+&$sqlPackageExe /a:Publish /sf:$pathToDacPac /tcs:$databaseConnectionString 
+
 $finishTime = Get-Date
 
+Write-Host -ForegroundColor Yellow "Started $startTime"
 Write-Host -ForegroundColor Yellow "Finished $finishTime"
 
 if($openBrowserWhenComplete -eq $True){
     Start-Process -FilePath ("http://{0}.cloudapp.net" -f $ServiceName)
 }
-
-
-
 
