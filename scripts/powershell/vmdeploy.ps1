@@ -3,8 +3,22 @@
         [Parameter(Mandatory=$False)]
         [string]$pathToPublishSettings = "MySettings.publishsettings",
 
-        [Parameter(Mandatory=$False,Position=9)]
-        [string]$location = "West US"
+        [Parameter(Mandatory=$False)]        
+        [string]$location = "West US",
+
+        [Parameter(Mandatory=$False)]
+        [string]$serviceName = "bneazuredemodeploy",
+
+        [Parameter(Mandatory=$False)]
+        [string]$vmName = "bneazurevm01",
+
+        [Parameter(Mandatory=$False)]
+        [string]$adminUser = "bneazuredemo1",
+                
+        [Parameter(Mandatory=$False)]
+        #[string]$adminPassword = "2gMPkgRnwb7Perbrl1X5"
+        [string]$adminPassword = "Oujms813!)"
+
 
 	 )
 cls
@@ -21,6 +35,8 @@ cls
 $startTime = Get-Date
 Write-Host -ForegroundColor Yellow "Starting $startTime"
 
+$affinityGroupName = $serviceName
+
 try{
     $thisIp = Detect-IPAddress
 }
@@ -31,14 +47,28 @@ catch{
 }
 
 Write-Host -ForegroundColor Yellow "Public IP is $thisIp"
-
 Import-AzurePublishSettingsFile -PublishSettingsFile $pathToPublishSettings
 
-$azureImages = Get-AzureVMImage -Verbose
+CreateAffinityGroup $affinityGroupName $location
+CreateCloudService $serviceName $affinityGroupName
+CreateCloudStorage $serviceName $affinityGroupName
+
+$subscription = Get-AzureSubscription -Current
+if (!$subscription) {throw "Cannot get Windows Azure subscription. Failure in Get-AzureSubscription check publish setttings file"}
+
+#Set the Default Storage Account & get the access key of the storage account
+Set-AzureSubscription $subscription.SubscriptionName -CurrentStorageAccountName $serviceName 
 
 
+$azureImages = Get-AzureVMImage | where {$_.PublisherName -eq “Microsoft Windows Server Group”} | where {$_.Label -eq “Windows Server 2012 R2 Datacenter, March 2014”} 
+$image = $azureImages[0]
+$vmImageName = $image.imagename
 
+$doesTheVMExist = Test-AzureName -Service $serviceName
+Write-Host -ForegroundColor Yellow "Does the service exist ??? $doesTheVMExist"
 
-
-
-
+#if($doesTheVMExist -eq $false){
+    $awesomeVM = New-AzureVMConfig –ImageName $vmImageName –Name $vmName –InstanceSize "Small" –HostCaching "ReadWrite" –DiskLabel "System"
+    $awesomeVM = Add-AzureProvisioningConfig –Windows –VM $awesomeVM –Password $adminPassword -AdminUsername $adminUser -EnableWinRMHttp
+    New-AzureVM –VM $awesomeVM –ServiceName $serviceName -Verbose -WaitForBoot
+#}

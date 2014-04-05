@@ -3,7 +3,7 @@ http://gallery.technet.microsoft.com/scriptcenter/Deploy-a-Windows-Azure-Web-816
 http://code.msdn.microsoft.com/windowsazure/Fix-It-app-for-Building-cdd80df4
 http://www.windowsazure.com/en-us/develop/net/building-real-world-cloud-apps/
 
-.\deploy.ps1 -pathToAzureConfig "C:\Source\Merbla\AzureDeploy\scripts\powershell\ServiceConfiguration.Cloud.cscfg" -pathToAzurePackage "C:\Source\Merbla\AzureDeploy\scripts\powershell\Sample.Cloud.cspkg" -Verbose
+.\deploy.ps1 -pathToAzureConfig "C:\AzureDeploy\scripts\powershell\ServiceConfiguration.Cloud.cscfg" -pathToAzurePackage "C:\AzureDeploy\scripts\powershell\Sample.Cloud.cspkg" -Verbose
 
 #>
 param(
@@ -17,7 +17,7 @@ param(
         [string]$pathToPublishSettings = "MySettings.publishsettings",
 
         [Parameter(Mandatory=$False,Position=4)]
-        [string]$serviceName = "bneazuredemo1",
+        [string]$serviceName = "bneazuredemodeploy",
 
         [Parameter(Mandatory=$False,Position=6)]
         [string]$sqlAdminUser = "bneazuredemo1",
