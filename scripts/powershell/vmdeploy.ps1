@@ -80,3 +80,7 @@ $credential = New-Object System.Management.Automation.PSCredential($adminUser, $
   
 Enter-PSSession -ConnectionUri $uri -Credential $credential 
 
+Install-WindowsFeature -Name Application-Server
+
+
+
