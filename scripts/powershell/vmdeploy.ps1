@@ -16,8 +16,8 @@
         [string]$adminUser = "bneazuredemo1",
                 
         [Parameter(Mandatory=$False)]
-        #[string]$adminPassword = "2gMPkgRnwb7Perbrl1X5"
-        [string]$adminPassword = "Oujms813!)"
+        [string]$adminPassword = "2gMPkgRnwb7Perbrl1X5"
+        
 
 
 	 )
@@ -72,3 +72,15 @@ Write-Host -ForegroundColor Yellow "Does the service exist ??? $doesTheVMExist"
     $awesomeVM = Add-AzureProvisioningConfig –Windows –VM $awesomeVM –Password $adminPassword -AdminUsername $adminUser -EnableWinRMHttp
     New-AzureVM –VM $awesomeVM –ServiceName $serviceName -Verbose -WaitForBoot
 #}
+
+
+.\InstallWinRMCertAzureVM.ps1 -SubscriptionName $subscription.SubscriptionName -ServiceName $serviceName -Name $vmName 
+ 
+  
+$uri = Get-AzureWinRMUri -ServiceName $serviceName -Name $vmName 
+ 
+$secPassword = ConvertTo-SecureString $adminPassword -AsPlainText -Force
+$credential = New-Object System.Management.Automation.PSCredential($adminUser, $adminPassword)
+ 
+  
+Enter-PSSession -ConnectionUri $uri -Credential $credential 
