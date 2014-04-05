@@ -30,22 +30,11 @@ ImportIfNotExists "WebAdministration"
 ImportIfNotExists "Azure"
 
 cls
-
+$affinityGroupName = $serviceName 
 $startTime = Get-Date
 Write-Host -ForegroundColor Yellow "Starting $startTime"
 
-$affinityGroupName = $serviceName
 
-try{
-    $thisIp = Detect-IPAddress
-}
-catch{
-    Write-Error "Cannot determine public IP of this machine"
- 
- exit
-}
-
-Write-Host -ForegroundColor Yellow "Public IP is $thisIp"
 Import-AzurePublishSettingsFile -PublishSettingsFile $pathToPublishSettings
 
 CreateAffinityGroup $affinityGroupName $location
@@ -64,12 +53,12 @@ $vmImageName = $image.imagename
 $doesTheVMExist = Test-AzureName -Service $serviceName
 Write-Host -ForegroundColor Yellow "Does the service exist ??? $doesTheVMExist"
 
-#if($doesTheVMExist -eq $false){
-    $awesomeVM = New-AzureVMConfig –ImageName $vmImageName –Name $vmName –InstanceSize "Small" –HostCaching "ReadWrite" –DiskLabel "System"
-    $awesomeVM = Add-AzureProvisioningConfig –Windows –VM $awesomeVM –Password $adminPassword -AdminUsername $adminUser -EnableWinRMHttp
-    New-AzureVM –VM $awesomeVM –ServiceName $serviceName -Verbose -WaitForBoot
-#}
-
+ 
+$awesomeVM = New-AzureVMConfig –ImageName $vmImageName –Name $vmName –InstanceSize "Small" –HostCaching "ReadWrite" –DiskLabel "System"
+$awesomeVM = Add-AzureProvisioningConfig –Windows –VM $awesomeVM –Password $adminPassword -AdminUsername $adminUser -EnableWinRMHttp
+Add-AzureEndpoint -Protocol tcp -LocalPort 443 -PublicPort 443 -Name 'HTTPs' -VM $awesomeVM
+New-AzureVM –VM $awesomeVM –ServiceName $serviceName -Verbose -WaitForBoot
+ 
 .\InstallWinRMCertAzureVM.ps1 -SubscriptionName $subscription.SubscriptionName -ServiceName $serviceName -Name $vmName 
    
 $uri = Get-AzureWinRMUri -ServiceName $serviceName -Name $vmName 
@@ -77,10 +66,10 @@ $uri = Get-AzureWinRMUri -ServiceName $serviceName -Name $vmName
 $secPassword = ConvertTo-SecureString $adminPassword -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential($adminUser, $secPassword)
  
-  
-Enter-PSSession -ConnectionUri $uri -Credential $credential 
+Invoke-Command –ConnectionUri $uri –Credential $credential –ScriptBlock { Install-WindowsFeature -Name Application-Server }
+Invoke-Command –ConnectionUri $uri –Credential $credential –ScriptBlock { Install-WindowsFeature -Name Web-Server  }
+Invoke-Command –ConnectionUri $uri –Credential $credential –ScriptBlock { Install-WindowsFeature -Name WindowsPowerShellWebAccess -Verbose  }
+Invoke-Command –ConnectionUri $uri –Credential $credential –ScriptBlock { Install-PswaWebApplication –UseTestCertificate -Verbose  }
+Invoke-Command –ConnectionUri $uri –Credential $credential –ScriptBlock { Add-PswaAuthorizationRule * * * -Verbose  }
 
-Install-WindowsFeature -Name Application-Server
-
-
-
+ 

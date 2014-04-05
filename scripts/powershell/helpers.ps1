@@ -331,3 +331,13 @@ Param(
     
     
 }
+ 
+
+function remote([System.Uri] $uri, [string] $user, [string] $password, [ScriptBlock] $block){  
+    Test-WSMan $hostIp
+    $pass = convertto-securestring $password -asplaintext -force
+    $cred = new-object -typename System.Management.Automation.PSCredential -argumentlist $user ,$pass 
+   
+    Invoke-Command -ConnectionUri $uri -Credential $cred -ScriptBlock  (. => { $block }) 
+
+} 
