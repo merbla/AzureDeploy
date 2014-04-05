@@ -341,3 +341,9 @@ function remote([System.Uri] $uri, [string] $user, [string] $password, [ScriptBl
     Invoke-Command -ConnectionUri $uri -Credential $cred -ScriptBlock  (. => { $block }) 
 
 } 
+
+
+function =>([scriptblock]$_sb_)
+{
+    $_sb_.GetNewClosure()
+}
