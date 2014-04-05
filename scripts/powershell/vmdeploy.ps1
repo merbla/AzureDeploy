@@ -1,4 +1,6 @@
-﻿param( 
+﻿#.\vmdeploy.ps1 -serviceName "bneazuredemo2"
+
+param( 
 
         [Parameter(Mandatory=$False)]
         [string]$pathToPublishSettings = "MySettings.publishsettings",
@@ -17,9 +19,6 @@
                 
         [Parameter(Mandatory=$False)]
         [string]$adminPassword = "2gMPkgRnwb7Perbrl1X5"
-        
-
-
 	 )
 cls
 
@@ -56,9 +55,7 @@ CreateCloudStorage $serviceName $affinityGroupName
 $subscription = Get-AzureSubscription -Current
 if (!$subscription) {throw "Cannot get Windows Azure subscription. Failure in Get-AzureSubscription check publish setttings file"}
 
-#Set the Default Storage Account & get the access key of the storage account
 Set-AzureSubscription $subscription.SubscriptionName -CurrentStorageAccountName $serviceName 
-
 
 $azureImages = Get-AzureVMImage | where {$_.PublisherName -eq “Microsoft Windows Server Group”} | where {$_.Label -eq “Windows Server 2012 R2 Datacenter, March 2014”} 
 $image = $azureImages[0]
@@ -73,14 +70,13 @@ Write-Host -ForegroundColor Yellow "Does the service exist ??? $doesTheVMExist"
     New-AzureVM –VM $awesomeVM –ServiceName $serviceName -Verbose -WaitForBoot
 #}
 
-
 .\InstallWinRMCertAzureVM.ps1 -SubscriptionName $subscription.SubscriptionName -ServiceName $serviceName -Name $vmName 
- 
-  
+   
 $uri = Get-AzureWinRMUri -ServiceName $serviceName -Name $vmName 
  
 $secPassword = ConvertTo-SecureString $adminPassword -AsPlainText -Force
-$credential = New-Object System.Management.Automation.PSCredential($adminUser, $adminPassword)
+$credential = New-Object System.Management.Automation.PSCredential($adminUser, $secPassword)
  
   
 Enter-PSSession -ConnectionUri $uri -Credential $credential 
+
