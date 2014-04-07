@@ -69,7 +69,7 @@ Add-AzureEndpoint -Protocol tcp -LocalPort 443 `
     -VM $awesomeVM
 
 New-AzureVM –VM $awesomeVM `
-    –ServiceName $serviceName 
+    –ServiceName $serviceName `
     -Verbose -WaitForBoot
  
 .\InstallWinRMCertAzureVM.ps1 `
@@ -85,7 +85,7 @@ $secPassword = ConvertTo-SecureString $adminPassword -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential($adminUser, $secPassword)
  
 Invoke-Command –ConnectionUri $uri –Credential $credential `
-    –ScriptBlock { Install-WindowsFeature -Name Application-Server -Verbose   }
+    –ScriptBlock { Install-WindowsFeature -Name Application-Server -Verbose  }
 
 Invoke-Command –ConnectionUri $uri –Credential $credential `
     –ScriptBlock { Install-WindowsFeature -Name Web-Server -Verbose  }

@@ -132,9 +132,7 @@ $deployment = DeployPackage -serviceName $serviceName `
 
 WaitRoleInstanceReady $serviceName
 
-$database = CreateDatabase `
-    -databaseServerName $sqlServerName ` 
-    -databaseName $databaseName
+$database = CreateDatabase -databaseServerName $sqlServerName -databaseName $databaseName
 
 $databaseConnectionString = Get-SQLAzureDatabaseConnectionString `
     -serverName $sqlServerName  `
