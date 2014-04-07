@@ -4,20 +4,19 @@ http://code.msdn.microsoft.com/windowsazure/Fix-It-app-for-Building-cdd80df4
 http://www.windowsazure.com/en-us/develop/net/building-real-world-cloud-apps/
 
 .\deploy.ps1 -pathToAzureConfig "C:\AzureDeploy\scripts\powershell\ServiceConfiguration.Cloud.cscfg" -pathToAzurePackage "C:\AzureDeploy\scripts\powershell\Sample.Cloud.cspkg" -Verbose
-
 #>
 param(
-        [Parameter(Mandatory=$True,Position=1)]
-        [string]$pathToAzureConfig ,
+        [Parameter(Mandatory=$False,Position=1)]
+        [string]$pathToAzureConfig ="C:\AzureDeploy\scripts\powershell\ServiceConfiguration.Cloud.cscfg",
 
-        [Parameter(Mandatory=$True,Position=2)]
-        [string]$pathToAzurePackage ,
+        [Parameter(Mandatory=$False,Position=2)]
+        [string]$pathToAzurePackage = "C:\AzureDeploy\scripts\powershell\Sample.Cloud.cspkg",
 
         [Parameter(Mandatory=$False,Position=3)]
         [string]$pathToPublishSettings = "MySettings.publishsettings",
 
         [Parameter(Mandatory=$False,Position=4)]
-        [string]$serviceName = "bneazuredemodeploy",
+        [string]$serviceName = "bneazuredemo",
 
         [Parameter(Mandatory=$False,Position=6)]
         [string]$sqlAdminUser = "bneazuredemo1",
@@ -26,19 +25,15 @@ param(
         [string]$sqlAdminPassword = "2gMPkgRnwb7Perbrl1X5",
 
         [Parameter(Mandatory=$False,Position=8)]
-        [string]$pathToDacPac = "Sample.Cloud.Database.dacpac",
+        [string]$pathToDacPac = "C:\AzureDeploy\scripts\powershell\Sample.Cloud.Database.dacpac",
 
         [Parameter(Mandatory=$False,Position=9)]
         [string]$location = "West US",
 
         [Parameter(Mandatory=$False,Position=10)]
         [bool]$removeServices = $False
-
-
 	 )
 cls
-
-
 
 #Include the helpers
 . .\Helpers.ps1
@@ -46,7 +41,10 @@ cls
 #Add the required modules
 ImportIfNotExists "WebAdministration"
 ImportIfNotExists "Azure"
-
+$affinityGroupName = $serviceName
+$databaseName = $serviceName
+$storageAccountName = $serviceName
+$firewallRuleName = $serviceName
 cls
 
 $startTime = Get-Date
@@ -60,7 +58,6 @@ catch{
  
  exit
 }
-
  
 Write-Host -ForegroundColor Yellow "Public IP of this machine: $ipRange"
 
@@ -79,19 +76,24 @@ if($removeServices -eq $True){
     Remove-AzureService -Confirm -DeleteAll -Force -PassThru -ServiceName $serviceName -WarningAction SilentlyContinue 
  }
 
-
-$affinityGroupName = $serviceName
-$databaseName = $serviceName
-$storageAccountName = $serviceName
-$firewallRuleName = $serviceName
-
 #Add the MSDN publish settings
 Import-AzurePublishSettingsFile -PublishSettingsFile $pathToPublishSettings
 
 $subscription = Get-AzureSubscription -Current
 if (!$subscription) {throw "Cannot get Windows Azure subscription. Failure in Get-AzureSubscription check publish setttings file"}
 
-CreateSqlServer -firewallRuleName $serviceName  -sqlAdminUser  $sqlAdminUser -sqlAdminPassword $sqlAdminPassword -location $location -ipAddress $ipRange
+try{
+    CreateSqlServer -firewallRuleName $serviceName `
+        -sqlAdminUser  $sqlAdminUser `
+        -sqlAdminPassword $sqlAdminPassword `
+        -location $location `
+        -ipAddress $ipRange
+}
+catch{
+    Write-Error "Cannot create SQL Server"
+ 
+ exit
+}
 
 #Get the server
 $servers = Get-AzureSqlDatabaseServer
@@ -102,34 +104,43 @@ Foreach ($s in $servers){
     }    
 }
 
-
-
 CreateAffinityGroup $affinityGroupName $location
-
 CreateCloudService $serviceName $affinityGroupName
-
 CreateCloudStorage $storageAccountName $affinityGroupName
 
 #Set the Default Storage Account & get the access key of the storage account
-Set-AzureSubscription $subscription.SubscriptionName -CurrentStorageAccountName $storageAccountName 
-
+Set-AzureSubscription $subscription.SubscriptionName `
+    -CurrentStorageAccountName $storageAccountName 
 
 $storagekey = Get-AzureStorageKey -StorageAccountName $storageAccountName
 $defaultStorageEndpoint ="DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}" -f $storageAccountName, $storagekey.Primary
 
-
 #Update the config
 Write-Host -ForegroundColor Yellow "Updating storage config to use $defaultStorageEndpoint"
 
-Update-CscfgSetting -configurationFilePath $pathToAzureConfig -settingName "Microsoft.WindowsAzure.Plugins.Caching.ConfigStoreConnectionString" -settingValue $defaultStorageEndpoint
-Update-CscfgSetting -configurationFilePath $pathToAzureConfig -settingName "Microsoft.WindowsAzure.Plugins.Diagnostics.ConnectionString" -settingValue $defaultStorageEndpoint
+Update-CscfgSetting -configurationFilePath $pathToAzureConfig `
+    -settingName "Microsoft.WindowsAzure.Plugins.Caching.ConfigStoreConnectionString" `
+    -settingValue $defaultStorageEndpoint
 
-$deployment = DeployPackage -serviceName $serviceName -pathToAzureConfig $pathToAzureConfig -pathToAzurePackage $pathToAzurePackage
+Update-CscfgSetting -configurationFilePath $pathToAzureConfig `
+    -settingName "Microsoft.WindowsAzure.Plugins.Diagnostics.ConnectionString" `
+    -settingValue $defaultStorageEndpoint
+
+$deployment = DeployPackage -serviceName $serviceName `
+    -pathToAzureConfig $pathToAzureConfig `
+    -pathToAzurePackage $pathToAzurePackage
 
 WaitRoleInstanceReady $serviceName
 
-$database = CreateDatabase -databaseServerName $sqlServerName -databaseName $databaseName
-$databaseConnectionString = Get-SQLAzureDatabaseConnectionString -serverName $sqlServerName  -databaseName $databaseName -sqlUser  $sqlAdminUser -sqlPassword $sqlAdminPassword 
+$database = CreateDatabase `
+    -databaseServerName $sqlServerName ` 
+    -databaseName $databaseName
+
+$databaseConnectionString = Get-SQLAzureDatabaseConnectionString `
+    -serverName $sqlServerName  `
+    -databaseName $databaseName `
+    -sqlUser  $sqlAdminUser `
+    -sqlPassword $sqlAdminPassword 
 
 Write-Host -ForegroundColor Yellow "Deploying using $databaseConnectionString"
 
@@ -144,4 +155,3 @@ Write-Host -ForegroundColor Yellow "Finished $finishTime"
 if($openBrowserWhenComplete -eq $True){
     Start-Process -FilePath ("http://{0}.cloudapp.net" -f $ServiceName)
 }
-

@@ -1,4 +1,3 @@
-
 function ImportIfNotExists
 {
  Param([string] $moduleName)
@@ -306,7 +305,7 @@ Param(
         Write-Host "Database server does not exist for the location, creating new server" -ForegroundColor Yellow
         $databaseServer = New-AzureSqlDatabaseServer -AdministratorLogin $sqlAdminUser  -AdministratorLoginPassword $sqlAdminPassword -Location $location -Verbose
         
-        New-AzureSqlDatabaseServerFirewallRule -ServerName $databaseServer.ServerName -RuleName $firewallRuleName -StartIpAddress $ipAddress -EndIpAddress $ipAddress
+        #New-AzureSqlDatabaseServerFirewallRule -ServerName $databaseServer.ServerName -RuleName $firewallRuleName -StartIpAddress $ipAddress -EndIpAddress $ipAddress
         #For the purposes of the demo all all :(
         New-AzureSqlDatabaseServerFirewallRule -ServerName $databaseServer.ServerName -RuleName "AllDaThingz" -StartIpAddress "0.0.0.0"  -EndIpAddress "255.255.255.255"
 

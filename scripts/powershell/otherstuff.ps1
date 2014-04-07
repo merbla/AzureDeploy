@@ -1,20 +1,23 @@
-﻿. .\Helpers.ps1
-cls
+﻿#Closures
+function =>([scriptblock]$_sb_){
+    $_sb_.GetNewClosure()
+}
 
-#Closures
 function doIt([ScriptBlock] $block){
     &$block
 }
 
 $myName = "Matt"
 
-$sb = { Write-Host -ForegroundColor Yellow $myName }
-doIt $sb
-
 doIt (. => { 
     Write-Host -ForegroundColor Red $myName
-}) 
+    #Install-WindowsFeature -Name Application-Server -Verbose $myName
+})
 
-#Invoke-Command –ConnectionUri $uri –Credential $credential –ScriptBlock { Install-WindowsFeature -Name Application-Server -Verbose   }
+Invoke-Command –ConnectionUri $uri `
+    –Credential $credential `
+    –ScriptBlock { 
+        Install-WindowsFeature -Name Application-Server -Verbose $myName
+    }
 
 
