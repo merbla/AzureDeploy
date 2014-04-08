@@ -1,10 +1,3 @@
-<#
-http://gallery.technet.microsoft.com/scriptcenter/Deploy-a-Windows-Azure-Web-81629e04
-http://code.msdn.microsoft.com/windowsazure/Fix-It-app-for-Building-cdd80df4
-http://www.windowsazure.com/en-us/develop/net/building-real-world-cloud-apps/
-
-.\deploy.ps1 -pathToAzureConfig "C:\AzureDeploy\scripts\powershell\ServiceConfiguration.Cloud.cscfg" -pathToAzurePackage "C:\AzureDeploy\scripts\powershell\Sample.Cloud.cspkg" -Verbose
-#>
 param(
         [Parameter(Mandatory=$False,Position=1)]
         [string]$pathToAzureConfig ="C:\AzureDeploy\scripts\powershell\ServiceConfiguration.Cloud.cscfg",

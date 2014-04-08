@@ -1,5 +1,4 @@
-﻿#.\vmdeploy.ps1 -serviceName "bneazuredemo2"
-param( 
+﻿param( 
 
         [Parameter(Mandatory=$False)]
         [string]$pathToPublishSettings = "MySettings.publishsettings",
